@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SMS Spam Filter</string>
+    <string name="tab_inbox">Inbox</string>
+    <string name="tab_spam">Spam</string>
+    <string name="manage_keywords">Manage Keywords</string>
+    <string name="view_spam_history">View Spam History</string>
+    <string name="permission_required">Permission Required</string>
+    <string name="sms_permission_message">This app needs SMS permission to filter spam messages.</string>
+    <string name="grant_permission">Grant Permission</string>
+    <string name="default_sms_app_required">Default SMS App Required</string>
+    <string name="default_sms_app_message">This app needs to be set as the default SMS app to filter messages.</string>
+    <string name="set_as_default">Set as Default</string>
+    <string name="spam_detected">Spam Message Detected</string>
+    <string name="spam_notification_content">A new spam message has been detected and moved to the spam folder.</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="bayesian_confidence">Bayesian Confidence</string>
+    <string name="todo">TODO</string>
+    <string name="new_message">New Message</string>
+    <string name="settings">Settings</string>
+</resources>
