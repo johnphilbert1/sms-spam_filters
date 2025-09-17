@@ -25,11 +25,11 @@ class TextPreprocessor {
         
         var cleaned = text
         
+        // First, convert to lowercase for consistent processing
+        cleaned = cleaned.lowercase()
+        
         // Remove emojis and special characters
         cleaned = removeEmojis(cleaned)
-        
-        // Normalize text (lowercase but preserve some structure)
-        cleaned = cleaned.lowercase()
         
         // Clean punctuation and special characters
         cleaned = cleanPunctuation(cleaned)
@@ -56,8 +56,36 @@ class TextPreprocessor {
     }
     
     private fun removeEmojis(text: String): String {
-        // Remove emoji characters (Unicode ranges for emojis)
-        return text.replace(Regex("[\\u{1F600}-\\u{1F64F}]|[\\u{1F300}-\\u{1F5FF}]|[\\u{1F680}-\\u{1F6FF}]|[\\u{1F1E0}-\\u{1F1FF}]|[\\u{2600}-\\u{26FF}]|[\\u{2700}-\\u{27BF}]"), "")
+        // Avoid unsupported regex escapes on Android: filter by Unicode code points instead
+        val builder = StringBuilder(text.length)
+        var i = 0
+        while (i < text.length) {
+            val codePoint = text.codePointAt(i)
+            val isEmoji = isEmojiCodePoint(codePoint)
+            if (!isEmoji) {
+                builder.appendCodePoint(codePoint)
+            }
+            i += Character.charCount(codePoint)
+        }
+        return builder.toString()
+    }
+
+    private fun isEmojiCodePoint(cp: Int): Boolean {
+        // Basic Emoji ranges (non-exhaustive but covers common sets)
+        return (
+            // Emoticons
+            (cp in 0x1F600..0x1F64F) ||
+            // Misc Symbols and Pictographs
+            (cp in 0x1F300..0x1F5FF) ||
+            // Transport and Map Symbols
+            (cp in 0x1F680..0x1F6FF) ||
+            // Regional Indicator Symbols
+            (cp in 0x1F1E0..0x1F1FF) ||
+            // Misc symbols
+            (cp in 0x2600..0x26FF) ||
+            // Dingbats
+            (cp in 0x2700..0x27BF)
+        )
     }
     
     private fun cleanPunctuation(text: String): String {

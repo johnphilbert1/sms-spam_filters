@@ -75,6 +75,12 @@ class TFLiteModel(private val context: Context) {
         }
         
         try {
+            // Validate input
+            if (text.isBlank()) {
+                android.util.Log.w("TFLiteModel", "Empty input text, returning neutral prediction")
+                return 0.5f
+            }
+            
             val preprocessedText = preprocessor.preprocess(text)
             android.util.Log.d("TFLiteModel", "Input text: '$text'")
             android.util.Log.d("TFLiteModel", "Preprocessed text: '$preprocessedText'")

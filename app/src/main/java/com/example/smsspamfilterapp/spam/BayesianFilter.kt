@@ -10,34 +10,36 @@ class BayesianFilter {
     
     fun loadPreTrainedData(context: android.content.Context) {
         try {
-            val inputStream = context.assets.open("bayesian_model.json")
+            // Load the merged Bayesian model
+            val inputStream = context.assets.open("merged_bayesian_model.json")
             val jsonString = inputStream.bufferedReader().use { it.readText() }
             val jsonObject = org.json.JSONObject(jsonString)
             
-            val spamCounts = jsonObject.getJSONObject("spam_word_counts")
-            val hamCounts = jsonObject.getJSONObject("ham_word_counts")
+            // Load word frequencies from the merged model
+            val wordFrequencies = jsonObject.getJSONObject("word_frequencies")
+            val wordIterator = wordFrequencies.keys()
             
-            // Load spam word counts
-            val spamIterator = spamCounts.keys()
-            while (spamIterator.hasNext()) {
-                val word = spamIterator.next()
-                val count = spamCounts.getInt(word)
-                spamWordCounts[word] = count
-                totalSpamMessages += count
+            while (wordIterator.hasNext()) {
+                val word = wordIterator.next()
+                val wordData = wordFrequencies.getJSONObject(word)
+                val spamCount = wordData.getInt("spam_count")
+                val hamCount = wordData.getInt("ham_count")
+                
+                spamWordCounts[word] = spamCount
+                hamWordCounts[word] = hamCount
+                totalSpamMessages += spamCount
+                totalHamMessages += hamCount
             }
             
-            // Load ham word counts
-            val hamIterator = hamCounts.keys()
-            while (hamIterator.hasNext()) {
-                val word = hamIterator.next()
-                val count = hamCounts.getInt(word)
-                hamWordCounts[word] = count
-                totalHamMessages += count
-            }
+            val version = jsonObject.optString("version", "unknown")
+            val totalWords = jsonObject.optInt("total_words", 0)
+            val modelType = jsonObject.optString("model_type", "unknown")
             
-            android.util.Log.d("BayesianFilter", "Loaded pre-trained data: ${spamWordCounts.size} spam words, ${hamWordCounts.size} ham words")
+            android.util.Log.d("BayesianFilter", "Loaded merged model v$version ($modelType): $totalWords words, ${totalSpamMessages} spam, ${totalHamMessages} ham")
+            
         } catch (e: Exception) {
-            android.util.Log.e("BayesianFilter", "Error loading pre-trained data: ${e.message}", e)
+            android.util.Log.e("BayesianFilter", "Error loading merged Bayesian model: ${e.message}", e)
+            android.util.Log.w("BayesianFilter", "Falling back to empty model - spam detection will be less accurate")
         }
     }
 

@@ -65,14 +65,19 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // Setup UI immediately
         setupDrawer()
         setupNavigation()
-        checkPermissions()
         setupFab()
         
         // Start with inbox fragment
         if (savedInstanceState == null) {
             navigateToInbox()
+        }
+        
+        // Move heavy operations to background
+        lifecycleScope.launch {
+            checkPermissions()
         }
     }
 

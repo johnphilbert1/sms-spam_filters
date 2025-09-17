@@ -28,18 +28,29 @@ class SpamDetector private constructor(context: Context) {
         }
     }
 
-    fun getMLSpamProbability(text: String): Float {
+    suspend fun getMLSpamProbability(text: String): Float {
         return try {
-            runBlocking {
-                withContext(Dispatchers.Default) {
-                    try {
-                        val result = tfliteModel.predict(text)
-                        Log.d("SpamDetector", "TFLite prediction for '$text': $result")
-                        result
-                    } catch (e: Exception) {
-                        Log.e("SpamDetector", "TFLite prediction failed: ${e.message}", e)
-                        0.5f // Neutral on error
+            withContext(Dispatchers.Default) {
+                try {
+                    // Validate input
+                    if (text.isBlank()) {
+                        Log.w("SpamDetector", "Empty text provided for ML prediction")
+                        return@withContext 0.5f
                     }
+                    
+                    val result = tfliteModel.predict(text)
+                    Log.d("SpamDetector", "TFLite prediction for '$text': $result")
+                    
+                    // Validate result
+                    if (result.isNaN() || result.isInfinite()) {
+                        Log.w("SpamDetector", "Invalid ML prediction result: $result")
+                        return@withContext 0.5f
+                    }
+                    
+                    result.coerceIn(0f, 1f)
+                } catch (e: Exception) {
+                    Log.e("SpamDetector", "TFLite prediction failed: ${e.message}", e)
+                    0.5f // Neutral on error
                 }
             }
         } catch (e: Exception) {
@@ -50,23 +61,39 @@ class SpamDetector private constructor(context: Context) {
     
     fun getBayesianSpamProbability(text: String): Float {
         return try {
+            // Validate input
+            if (text.isBlank()) {
+                Log.w("SpamDetector", "Empty text provided for Bayesian prediction")
+                return 0.5f
+            }
+            
             val result = bayesianFilter.getSpamProbability(text)
             Log.d("SpamDetector", "Bayesian prediction for '$text': $result")
-            result
+            
+            // Validate result
+            if (result.isNaN() || result.isInfinite()) {
+                Log.w("SpamDetector", "Invalid Bayesian prediction result: $result")
+                return 0.5f
+            }
+            
+            result.coerceIn(0f, 1f)
         } catch (e: Exception) {
             Log.e("SpamDetector", "Bayesian prediction failed: ${e.message}", e)
             0.5f // Neutral on error
         }
     }
     
-    fun isSpam(text: String): Boolean {
-        val mlConfidence = getMLSpamProbability(text)
-        val bayesianConfidence = getBayesianSpamProbability(text)
+    suspend fun isSpam(text: String): Boolean {
+        // Preprocess text for consistent case handling
+        val preprocessedText = preprocessor.preprocess(text)
+        
+        val mlConfidence = getMLSpamProbability(preprocessedText)
+        val bayesianConfidence = getBayesianSpamProbability(preprocessedText)
         
         // More conservative hybrid decision logic
         val isSpam = when {
             // Only very high confidence from either model
-            mlConfidence > 0.8f -> true      // Very high TFLite confidence
+            mlConfidence > 0.85f -> true      // Very high TFLite confidence
             bayesianConfidence > 0.9f -> true // Very high Bayesian confidence
             
             // Both models strongly agree
@@ -81,7 +108,7 @@ class SpamDetector private constructor(context: Context) {
         return isSpam
     }
     
-    fun getSpamProbability(text: String): Float {
+    suspend fun getSpamProbability(text: String): Float {
         val mlConfidence = getMLSpamProbability(text)
         val bayesianConfidence = getBayesianSpamProbability(text)
         

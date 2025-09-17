@@ -32,6 +32,7 @@ class InboxFragment : Fragment() {
     
     private lateinit var adapter: SimpleMessageAdapter
     private lateinit var searchEditText: TextInputEditText
+    private lateinit var loadingProgressBar: android.widget.ProgressBar
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -51,7 +52,9 @@ class InboxFragment : Fragment() {
 
     private fun setupViews(view: View) {
         searchEditText = view.findViewById(R.id.searchEditText)
+        loadingProgressBar = view.findViewById(R.id.loadingProgressBar)
         searchEditText.setOnEditorActionListener { _, _, _ ->
+            loadingProgressBar.visibility = android.view.View.VISIBLE
             viewModel.searchMessages(searchEditText.text.toString())
             true
         }
@@ -117,6 +120,7 @@ class InboxFragment : Fragment() {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.inboxMessages.collectLatest { messages ->
                     adapter.submitList(messages)
+                    loadingProgressBar.visibility = android.view.View.GONE
                 }
             }
         }
